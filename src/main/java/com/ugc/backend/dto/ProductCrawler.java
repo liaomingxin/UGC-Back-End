@@ -67,9 +67,17 @@ public class ProductCrawler {
 
             // 获取价格
             try {
-                List<WebElement> elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                    By.className(siteConfig.getPrice().getClassName())));
-                
+                List<WebElement> elements;
+                try {
+                    // 首先尝试使用className
+                    elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                        By.className(siteConfig.getPrice().getClassName())));
+                } catch (Exception e) {
+                    // 如果失败，尝试使用cssSelector
+                    elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                        By.cssSelector(siteConfig.getPrice().getClassName())));
+                }
+
                 for (WebElement element : elements) {
                     String text = element.getText().trim();
                     if (text.matches(siteConfig.getPrice().getPattern())) {

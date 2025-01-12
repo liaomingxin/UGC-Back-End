@@ -36,7 +36,7 @@ public class ContentController {
             );
             
             // 返回生成的内容和产品信息
-            return ResponseEntity.ok(new ContentGenerationResponse(generatedContent));
+            return ResponseEntity.ok(new ContentGenerationResponse(generatedContent, product));
             
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();

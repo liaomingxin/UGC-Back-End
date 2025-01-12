@@ -7,4 +7,5 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ContentGenerationResponse {
     private String content;
+    private ProductDTO product;
 } 
