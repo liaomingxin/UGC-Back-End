@@ -67,7 +67,13 @@ POST /api/content/generate
 响应体：
 ```json
 {
-    "content": "生成的营销文案"
+    "content": "生成的营销文案",
+    "product": {
+        "title": "商品标题",
+        "price": "商品价格",
+        "imageUrl": "商品图片链接",
+        "productUrl": "商品链接"
+    }
 }
 ```
 
