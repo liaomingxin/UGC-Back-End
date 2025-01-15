@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import com.ugc.backend.config.SelectorConfig;
+import com.ugc.backend.dto.GenerateMimicRequest;
+import com.ugc.backend.dto.GenerateMimicResponse;
+import com.ugc.backend.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/content")
@@ -42,6 +45,34 @@ public class ContentController {
             return ResponseEntity.ok(generatedContent);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @PostMapping("/generate-mimic")
+    public ResponseEntity<ApiResponse<GenerateMimicResponse>> generateMimicContent(
+        @RequestBody GenerateMimicRequest request
+    ) {
+        try {
+            // 输入验证
+            if (request.getTemplate() == null || request.getTemplate().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                    ApiResponse.error(400, "Invalid template", "Template cannot be empty")
+                );
+            }
+            
+            if (request.getTemplate().length() < 10) {
+                return ResponseEntity.badRequest().body(
+                    ApiResponse.error(400, "Template too short", "Template must be at least 10 characters")
+                );
+            }
+            
+            GenerateMimicResponse response = aiService.generateMimicContent(request);
+            return ResponseEntity.ok(ApiResponse.success(response));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                ApiResponse.error(500, "Internal server error", e.getMessage())
+            );
         }
     }
 } 

@@ -1,6 +1,8 @@
 package com.ugc.backend.service.impl;
 
 import com.ugc.backend.dto.ProductDTO;
+import com.ugc.backend.dto.GenerateMimicRequest;
+import com.ugc.backend.dto.GenerateMimicResponse;
 import com.ugc.backend.service.AIService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -107,6 +109,135 @@ public class AIServiceImpl implements AIService {
             log.error("Error generating content: ", e);
             throw new RuntimeException("Failed to generate content", e);
         }
+    }
+    
+    @Override
+    public GenerateMimicResponse generateMimicContent(GenerateMimicRequest request) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + apiKey);
+            
+            // 构建提示信息
+            String prompt = buildMimicPrompt(request);
+            
+            // 构建请求体
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", "gpt-3.5-turbo");
+            requestBody.put("stream", false);
+            requestBody.put("temperature", 0.7);
+            
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of(
+                "role", "system",
+                "content", "你是一个专业的文案创作专家，擅长模仿和创新。请基于用户提供的模板文案，结合场景和要求创作新的文案。"
+            ));
+            messages.add(Map.of(
+                "role", "user",
+                "content", prompt
+            ));
+            
+            requestBody.put("messages", messages);
+            
+            // 发送请求
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<Map> response = restTemplate.exchange(
+                baseUrl + "/v1/chat/completions",
+                HttpMethod.POST,
+                entity,
+                Map.class
+            );
+            
+            // 解析响应
+            if (response.getBody() != null) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> choice = choices.get(0);
+                    Map<String, String> message = (Map<String, String>) choice.get("message");
+                    String content = message.get("content");
+                    
+                    // 构建响应
+                    return GenerateMimicResponse.builder()
+                        .content(content)
+                        .wordCount(countWords(content))
+                        .sentiment(analyzeSentiment(content))
+                        .keywords(extractKeywords(content))
+                        .build();
+                }
+            }
+            
+            throw new RuntimeException("Failed to generate mimic content: Empty response");
+            
+        } catch (Exception e) {
+            log.error("Error generating mimic content: ", e);
+            throw new RuntimeException("Failed to generate mimic content", e);
+        }
+    }
+    
+    private String buildMimicPrompt(GenerateMimicRequest request) {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("请参考以下模板文案，创作一篇新的营销文案：\n\n");
+        prompt.append("模板文案：\n").append(request.getTemplate()).append("\n\n");
+        prompt.append("要求：\n");
+        prompt.append("1. 场景：").append(getSceneDescription(request.getScene())).append("\n");
+        prompt.append("2. 文案长度：").append(request.getLength()).append("字左右\n");
+        
+        if (request.getProductInfo() != null) {
+            prompt.append("\n商品信息：\n");
+            prompt.append("- 标题：").append(request.getProductInfo().getTitle()).append("\n");
+            prompt.append("- 描述：").append(request.getProductInfo().getDescription()).append("\n");
+            prompt.append("- 价格：").append(request.getProductInfo().getPrice()).append("\n");
+            if (request.getProductInfo().getFeatures() != null && !request.getProductInfo().getFeatures().isEmpty()) {
+                prompt.append("- 特点：\n");
+                request.getProductInfo().getFeatures().forEach(feature -> 
+                    prompt.append("  * ").append(feature).append("\n")
+                );
+            }
+        }
+        
+        return prompt.toString();
+    }
+    
+    private String getSceneDescription(String scene) {
+        switch (scene) {
+            case "beauty":
+                return "美妆护肤";
+            case "fashion":
+                return "时尚服饰";
+            case "home":
+                return "家居生活";
+            case "fitness":
+                return "健康运动";
+            case "travel":
+                return "旅游出行";
+            case "food":
+                return "美食餐饮";
+            case "emotion":
+                return "情感生活";
+            default:
+                return "通用场景";
+        }
+    }
+    
+    private int countWords(String content) {
+        return content.length();
+    }
+    
+    private String analyzeSentiment(String content) {
+        // 简单情感分析逻辑，可以根据需要扩展
+        if (content.contains("优秀") || content.contains("完美") || content.contains("推荐")) {
+            return "positive";
+        } else if (content.contains("差") || content.contains("不好") || content.contains("失望")) {
+            return "negative";
+        }
+        return "neutral";
+    }
+    
+    private List<String> extractKeywords(String content) {
+        // 简单关键词提取逻辑，可以根据需要扩展
+        List<String> keywords = new ArrayList<>();
+        // 这里可以实现关键词提取算法
+        return keywords;
     }
     
     // 辅助方法：获取风格描述
