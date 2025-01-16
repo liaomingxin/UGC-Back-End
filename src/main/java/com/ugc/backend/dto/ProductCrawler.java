@@ -40,22 +40,22 @@ public class ProductCrawler {
         try {
             SiteConfig siteConfig = getSiteConfig(url);
             
-            // 根据操作系统选择正确的驱动文件
-            String driverFileName = System.getProperty("os.name").toLowerCase().contains("windows") 
-                ? "chromedriver.exe" 
-                : "chromedriver";
+//            // 根据操作系统选择正确的驱动文件
+//            String driverFileName = System.getProperty("os.name").toLowerCase().contains("windows")
+//                ? "chromedriver.exe"
+//                : "chromedriver";
             
-            String driverPath = getClass().getClassLoader()
-                .getResource(driverFileName)
-                .getPath();
-            
-            // 处理 URL 编码的路径（处理空格等特殊字符）
-            driverPath = java.net.URLDecoder.decode(driverPath, "UTF-8");
-            
-            // 设置可执行权限（Linux系统需要）
-            if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
-                new File(driverPath).setExecutable(true);
-            }
+//            String driverPath = getClass().getClassLoader()
+//                .getResource(driverFileName)
+//                .getPath();
+//
+//            // 处理 URL 编码的路径（处理空格等特殊字符）
+//            driverPath = java.net.URLDecoder.decode(driverPath, "UTF-8");
+//
+//            // 设置可执行权限（Linux系统需要）
+//            if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+//                new File(driverPath).setExecutable(true);
+//            }
 
             System.setProperty("webdriver.chrome.driver", "/root/workspace/java/workspace/ugc/chromedriver");
 
