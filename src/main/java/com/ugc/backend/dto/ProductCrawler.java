@@ -13,6 +13,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.io.File;
 
 @Component
 public class ProductCrawler {
@@ -39,14 +40,32 @@ public class ProductCrawler {
         try {
             SiteConfig siteConfig = getSiteConfig(url);
             
-            // 设置Chrome浏览器驱动
-            System.setProperty("webdriver.chrome.driver", "D:\\devolopment_tools\\Cursor\\workspace\\UGC-Back-End\\src\\main\\resources\\chromedriver.exe");
+            // 根据操作系统选择正确的驱动文件
+            String driverFileName = System.getProperty("os.name").toLowerCase().contains("windows") 
+                ? "chromedriver.exe" 
+                : "chromedriver";
             
+            String driverPath = getClass().getClassLoader()
+                .getResource(driverFileName)
+                .getPath();
+            
+            // 处理 URL 编码的路径（处理空格等特殊字符）
+            driverPath = java.net.URLDecoder.decode(driverPath, "UTF-8");
+            
+            // 设置可执行权限（Linux系统需要）
+            if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+                new File(driverPath).setExecutable(true);
+            }
+            
+            System.setProperty("webdriver.chrome.driver", driverPath);
+
             ChromeOptions options = new ChromeOptions();
+            options.addArguments("--remote-allow-origins=*");
             options.addArguments("--headless");
             options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             
             driver = new ChromeDriver(options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));

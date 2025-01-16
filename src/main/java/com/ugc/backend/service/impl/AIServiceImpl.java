@@ -9,11 +9,19 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.*;
 
 @Service
 @Slf4j
+@Retryable(
+    value = { ResourceAccessException.class },
+    maxAttempts = 3,
+    backoff = @Backoff(delay = 2000)
+)
 public class AIServiceImpl implements AIService {
     
     @Value("${openai.api-key}")
