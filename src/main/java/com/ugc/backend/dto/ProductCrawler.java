@@ -56,8 +56,9 @@ public class ProductCrawler {
             if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
                 new File(driverPath).setExecutable(true);
             }
-            
-            System.setProperty("webdriver.chrome.driver", driverPath);
+
+            System.setProperty("webdriver.chrome.driver", "/root/workspace/java/workspace/ugc/chromedriver");
+
 
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--remote-allow-origins=*");
