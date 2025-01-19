@@ -1,0 +1,47 @@
+# 电商网站选择器配置
+selectors:
+  # 淘宝/天猫
+  taobao:
+    domain: ["taobao.com", "tmall.com"]
+    title: "#tbpc-detail-item-title > h1"
+    price:
+      className: "text--Mdqy24Ex"
+      pattern: "^[¥$€£]?\\s*\\d+\\.?\\d*.*"
+    image: "div.innerWrap--tD6LdQYX > div > img"
+    
+  # 京东
+  jd:
+    domain: ["jd.com"]
+    title: ".sku-name"
+    price:
+      className: "price J-p-*"
+      pattern: "^[¥$€£]?\\s*\\d+\\.?\\d*.*"
+    image: "#spec-img" 
+
+  # 亚马逊
+  amazon:
+    domain: ["amazon.com"]
+    title: "#productTitle"
+    price:
+      className: "a-price-whole"
+      pattern: "^[¥$€£]?\\s*\\d+\\.?\\d*.*"
+    image: "#landingImage"
+
+  # e-bay
+  ebay:
+    domain: ["ebay.com"]
+    title: "#mainContent > div > div.vim.x-item-title > h1 > span.ux-textspans.ux-textspans--BOLD"
+    price:
+      className: "#mainContent > div > div.vim.x-price-section.mar-t-20 > div > div > div.x-price-primary > span"
+      pattern: "^[¥$€£]?\\s*\\d+\\.?\\d*.*"
+    image: "#PicturePanel > div > div > div > div.x-photos-min-view.filmstrip.filmstrip-x > div.ux-image-carousel-container.image-container > div.ux-image-carousel.zoom.img-transition-medium > div.ux-image-carousel-item.image-treatment.active.image > img"
+
+  
+  # temu
+  temu:
+    domain: ["temu.com"]
+    title: "#Z29vZHNUaXRsZUlk > span"
+    price:
+      className: "#OverviewRef > div.goodsInfo-3H3BD > div.priceWrap-1EfAV > div.wrap-1TAlX.curPrice-3513Q"
+      pattern: "^[¥$€£]?\\s*\\d+\\.?\\d*.*"
+    image: "#banner-anchor-image"
