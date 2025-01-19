@@ -118,70 +118,153 @@ public class AIServiceImpl implements AIService {
             throw new RuntimeException("Failed to generate content", e);
         }
     }
-    
+
     @Override
     public GenerateMimicResponse generateMimicContent(GenerateMimicRequest request) {
+        // 开始生成文案
+        log.info("Starting to generate mimic content with request: {}", request);
+
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + apiKey);
-            
+            // 设置请求头
+            HttpHeaders headers = createHeaders();
+            log.debug("Headers set: {}", headers);
+
             // 构建提示信息
             String prompt = buildMimicPrompt(request);
-            
+            log.debug("Prompt built: {}", prompt);
+
             // 构建请求体
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", "gpt-3.5-turbo");
-            requestBody.put("stream", false);
-            requestBody.put("temperature", 0.7);
-            
-            List<Map<String, String>> messages = new ArrayList<>();
-            messages.add(Map.of(
+            Map<String, Object> requestBody = createRequestBody(prompt);
+            log.debug("Request body created: {}", requestBody);
+
+            // 发送请求并获取响应
+            ResponseEntity<Map> response = sendRequest(headers, requestBody);
+            log.debug("Response received: {}", response);
+
+            // 解析响应并生成返回结果
+            return parseResponse(response);
+
+        } catch (Exception e) {
+            // 捕获异常并记录详细日志
+            log.error("Error occurred while generating mimic content: ", e);
+            throw new RuntimeException("Failed to generate mimic content", e);
+        }
+    }
+
+    /**
+     * 创建请求头，包括内容类型和认证信息。
+     *
+     * @return HttpHeaders 请求头对象
+     */
+    private HttpHeaders createHeaders() {
+        log.info("Creating headers for the API request");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+        return headers;
+    }
+
+    /**
+     * 构建请求体，包含模型、温度、消息等内容。
+     *
+     * @param prompt 模拟内容的提示
+     * @return Map 请求体
+     */
+    private Map<String, Object> createRequestBody(String prompt) {
+        log.info("Creating request body with prompt: {}", prompt);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "gpt-3.5-turbo");
+        requestBody.put("stream", false);
+        requestBody.put("temperature", 0.7);
+        requestBody.put("messages", createMessages(prompt));
+
+        log.debug("Request body created: {}", requestBody);
+        return requestBody;
+    }
+
+    /**
+     * 创建消息列表，用于向模型提供输入。
+     *
+     * @param prompt 模拟内容的提示
+     * @return List<Map<String, String>> 消息列表
+     */
+    private List<Map<String, String>> createMessages(String prompt) {
+        log.info("Creating messages for the request with prompt: {}", prompt);
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of(
                 "role", "system",
                 "content", "你是一个专业的文案创作专家，擅长模仿和创新。请基于用户提供的模板文案，结合场景和要求创作新的文案。"
-            ));
-            messages.add(Map.of(
+        ));
+        messages.add(Map.of(
                 "role", "user",
                 "content", prompt
-            ));
-            
-            requestBody.put("messages", messages);
-            
-            // 发送请求
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<Map> response = restTemplate.exchange(
+        ));
+
+        log.debug("Messages created: {}", messages);
+        return messages;
+    }
+
+    /**
+     * 发送请求并接收响应。
+     *
+     * @param headers 请求头
+     * @param requestBody 请求体
+     * @return ResponseEntity<Map> API响应
+     */
+    private ResponseEntity<Map> sendRequest(HttpHeaders headers, Map<String, Object> requestBody) {
+        log.info("Sending request to the API...");
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<Map> response = restTemplate.exchange(
                 baseUrl + "/v1/chat/completions",
                 HttpMethod.POST,
                 entity,
                 Map.class
-            );
-            
-            // 解析响应
-            if (response.getBody() != null) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> choice = choices.get(0);
-                    Map<String, String> message = (Map<String, String>) choice.get("message");
-                    String content = message.get("content");
-                    
-                    // 构建响应
-                    return GenerateMimicResponse.builder()
-                        .content(content)
-                        .wordCount(countWords(content))
-                        .sentiment(analyzeSentiment(content))
-                        .keywords(extractKeywords(content))
-                        .build();
-                }
-            }
-            
-            throw new RuntimeException("Failed to generate mimic content: Empty response");
-            
-        } catch (Exception e) {
-            log.error("Error generating mimic content: ", e);
-            throw new RuntimeException("Failed to generate mimic content", e);
-        }
+        );
+
+        log.info("Request sent, received response status: {}", response.getStatusCode());
+        return response;
     }
-    
+
+    /**
+     * 解析响应并生成最终的返回对象。
+     *
+     * @param response API响应
+     * @return GenerateMimicResponse 返回生成的文案对象
+     * @throws RuntimeException 如果响应无效或不包含有效的内容
+     */
+    private GenerateMimicResponse parseResponse(ResponseEntity<Map> response) {
+        log.info("Parsing response to extract content...");
+
+        if (response.getBody() == null) {
+            log.error("Failed to generate mimic content: Empty response");
+            throw new RuntimeException("Failed to generate mimic content: Empty response");
+        }
+
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+        if (choices.isEmpty()) {
+            log.error("Failed to generate mimic content: No choices in response");
+            throw new RuntimeException("Failed to generate mimic content: No choices in response");
+        }
+
+        Map<String, Object> choice = choices.get(0);
+        Map<String, String> message = (Map<String, String>) choice.get("message");
+        String content = message.get("content");
+
+        log.debug("Content generated: {}", content);
+
+        // 构建响应对象
+        return GenerateMimicResponse.builder()
+                .content(content)
+                .wordCount(countWords(content))
+                .sentiment(analyzeSentiment(content))
+                .keywords(extractKeywords(content))
+                .build();
+    }
+
+
     private String buildMimicPrompt(GenerateMimicRequest request) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("请参考以下模板文案，创作一篇新的营销文案：\n\n");

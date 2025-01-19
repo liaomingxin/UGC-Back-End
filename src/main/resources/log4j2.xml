@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="60">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${hostName} --- [%15.15t] %-40.40c{1.} : %m%n%ex</Property>
+        <Property name="LOG_PATH">logs</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台输出 -->
+        <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <!-- 所有日志 -->
+        <RollingFile name="FileAppender"
+                     fileName="${LOG_PATH}/application.log"
+                     filePattern="${LOG_PATH}/application-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- 错误日志 -->
+        <RollingFile name="ErrorFileAppender"
+                     fileName="${LOG_PATH}/error.log"
+                     filePattern="${LOG_PATH}/error-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- API访问日志 -->
+        <RollingFile name="ApiAccessAppender"
+                     fileName="${LOG_PATH}/api-access.log"
+                     filePattern="${LOG_PATH}/api-access-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- API访问日志配置 -->
+        <Logger name="com.ugc.backend.controller" level="INFO" additivity="false">
+            <AppenderRef ref="ApiAccessAppender"/>
+            <AppenderRef ref="ConsoleAppender"/>
+        </Logger>
+
+        <!-- 业务逻辑日志配置 -->
+        <Logger name="com.ugc.backend.service" level="INFO" additivity="false">
+            <AppenderRef ref="FileAppender"/>
+            <AppenderRef ref="ConsoleAppender"/>
+        </Logger>
+
+        <!-- 错误日志配置 -->
+        <Logger name="com.ugc.backend" level="ERROR" additivity="false">
+            <AppenderRef ref="ErrorFileAppender"/>
+            <AppenderRef ref="ConsoleAppender"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>

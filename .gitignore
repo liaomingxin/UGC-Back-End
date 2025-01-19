@@ -1,2 +1,31 @@
 .idea/*
 .history/*
+target/*
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# Compiled files
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# 日志文件
+logs/
+*.log
