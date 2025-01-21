@@ -1,9 +1,13 @@
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\service\AIService.java
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\ContentGenerationRequest.java
-D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\config\RestTemplateConfig.java
-D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\ProductCrawler.java
+D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\GenerateMimicResponse.java
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\UGCBackEndApplication.java
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\service\impl\AIServiceImpl.java
+D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\config\SelectorConfig.java
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\ContentGenerationResponse.java
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\controller\ContentController.java
+D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\config\RestTemplateConfig.java
+D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\ApiResponse.java
+D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\ProductCrawler.java
+D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\GenerateMimicRequest.java
 D:\devolopment_tools\Cursor\workspace\UGC-Back-End\src\main\java\com\ugc\backend\dto\ProductDTO.java
