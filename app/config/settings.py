@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
 
 class Settings(BaseSettings):
     """
@@ -12,11 +13,11 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api"  # API 路由前缀
 
     # OpenAI Configuration
-    OPENAI_API_KEY: str = "sk-kh5dDiP76fy07AOKAfF9KSjR0Lpb5OdThhs29PWpOxLb2rIq"
-    OPENAI_BASE_URL: str = "https://api.gpts.vin"
+    OPENAI_API_KEY: str
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
 
     # Selenium Configuration
-    CHROME_DRIVER_PATH: str = "/usr/local/bin/chromedriver"  # ChromeDriver 路径
+    CHROME_DRIVER_PATH: Optional[str] = None
 
     class Config:
         """

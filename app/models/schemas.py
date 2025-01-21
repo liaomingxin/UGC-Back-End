@@ -2,18 +2,32 @@ from pydantic import BaseModel, HttpUrl
 from typing import List, Optional
 
 class ProductDTO(BaseModel):
-    """
-    数据传输对象，表示商品信息。
-    属性：
-        title (str): 商品标题。
-        price (str): 商品价格。
-        image_url (Optional[HttpUrl]): 商品图片的URL，可选。
-        product_url (HttpUrl): 商品页面的URL。
-    """
+    """商品数据传输对象"""
     title: str
     price: str
-    image_url: Optional[HttpUrl]
-    product_url: HttpUrl
+    image_url: Optional[str] = None
+    product_url: str
+
+class ProductRequest(BaseModel):
+    """商品请求模型"""
+    productUrl: str
+
+class ProductResponse(BaseModel):
+    """商品响应模型"""
+    title: str
+    price: str
+    imageUrl: Optional[str] = None
+    productUrl: str
+
+    @classmethod
+    def from_dto(cls, dto: ProductDTO, product_url: str):
+        """从DTO创建响应对象"""
+        return cls(
+            title=dto.title,
+            price=dto.price,
+            imageUrl=dto.image_url,
+            productUrl=product_url
+        )
 
 class ContentGenerationRequest(BaseModel):
     """
@@ -68,18 +82,11 @@ class GenerateMimicResponse(BaseModel):
     keywords: List[str]
 
 class ApiResponse(BaseModel):
-    """
-    通用API响应对象。
-    属性：
-        code (int): 响应状态码。
-        message (str): 响应消息。
-        data (Optional[dict]): 返回的数据内容，可选。
-        details (Optional[str]): 错误详情信息，可选。
-    """
-    code: int
-    message: str
+    """通用API响应模型"""
+    success: bool
     data: Optional[dict] = None
-    details: Optional[str] = None
+    error: Optional[str] = None
+    code: int = 200
 
     @classmethod
     def success(cls, data):
@@ -90,7 +97,7 @@ class ApiResponse(BaseModel):
         返回：
             ApiResponse: 成功响应对象。
         """
-        return cls(code=200, message="success", data=data)
+        return cls(success=True, data=data)
 
     @classmethod
     def error(cls, code: int, message: str, details: str = None):
@@ -103,4 +110,4 @@ class ApiResponse(BaseModel):
         返回：
             ApiResponse: 错误响应对象。
         """
-        return cls(code=code, message=message, details=details)
+        return cls(success=False, code=code, error=message)

@@ -6,7 +6,9 @@ from app.models.schemas import (
     ContentGenerationResponse,
     GenerateMimicRequest,
     GenerateMimicResponse,
-    ApiResponse
+    ApiResponse,
+    ProductRequest,
+    ProductResponse
 )
 from app.core.crawler import ProductCrawler
 from app.core.ai_service import AIService
@@ -15,28 +17,34 @@ from app.utils.logger import setup_logger
 # 初始化日志记录器
 logger = setup_logger()
 # 初始化路由器
-router = APIRouter()
+router = APIRouter(prefix="/content")
 
 # 初始化服务实例
 crawler = ProductCrawler()
 ai_service = AIService()
 
-@router.post("/crawl", response_model=ProductDTO)
-async def crawl_product(product: ProductDTO):
+@router.post("/crawl", response_model=ProductResponse)
+async def crawl_product(request: ProductRequest):
     """
-    爬取商品信息。
-    参数：
-        product (ProductDTO): 包含商品URL的信息。
-    返回：
-        ProductDTO: 爬取的商品数据。
+    爬取商品信息
     """
     try:
-        logger.info(f"Crawling product data from URL: {product.product_url}")
-        product_data = await crawler.crawl_product_data(product.product_url)
-        return product_data
+        logger.info(f"Crawling product data from URL: {request.productUrl}")
+        product_dto = await crawler.crawl_product_data(request.productUrl)
+        
+        # 使用from_dto方法创建响应
+        response = ProductResponse.from_dto(product_dto, request.productUrl)
+        return response
+        
     except Exception as e:
         logger.error(f"Error crawling product: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Error crawling product: {str(e)}")
+        error_msg = str(e)
+        if "Connection refused" in error_msg:
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+        elif "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail="Product not found")
+        else:
+            raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate", response_model=ContentGenerationResponse)
 async def generate_content(request: ContentGenerationRequest):

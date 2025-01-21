@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.utils.logger import setup_logger
 from app.config.settings import settings
 from app.api import content  # 导入路由模块
@@ -16,14 +17,19 @@ app = FastAPI(
 # 配置跨域资源共享（CORS）中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有来源
-    allow_credentials=True,  # 允许发送跨域 cookie
-    allow_methods=["*"],  # 允许所有 HTTP 方法
-    allow_headers=["*"],  # 允许所有请求头
+    allow_origins=["*"],  # 生产环境中应该设置具体的域名
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # 注册 API 路由
-app.include_router(content.router, prefix=settings.API_PREFIX)
+app.include_router(
+    content.router, 
+    prefix=settings.API_PREFIX,
+    tags=["content"]
+)
 
 @app.on_event("startup")
 async def startup_event():
@@ -40,3 +46,14 @@ async def shutdown_event():
     记录关闭日志并执行关闭前的清理任务。
     """
     logger.info("Shutting down UGC Content Generator...")
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": exc.detail,
+            "code": exc.status_code
+        }
+    )

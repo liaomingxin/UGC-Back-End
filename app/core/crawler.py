@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,7 +11,7 @@ import yaml
 from pathlib import Path
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.models.schemas import ProductDTO
+from app.models.schemas import ProductDTO, ProductResponse
 from app.models.crawler import SelectorsConfig, SiteConfig
 from app.config.settings import settings
 from app.utils.logger import setup_logger
@@ -25,6 +26,7 @@ class ProductCrawler:
         """
         self.selectors = self._load_selectors()
         self.chrome_options = self._setup_chrome_options()
+        self.service = Service(executable_path=settings.CHROME_DRIVER_PATH)
 
     def _load_selectors(self) -> SelectorsConfig:
         """
@@ -44,7 +46,8 @@ class ProductCrawler:
             Options: Chrome浏览器选项对象。
         """
         options = Options()
-        options.add_argument("--headless")  # 无头模式
+        if not settings.DEBUG:
+            options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
@@ -71,72 +74,119 @@ class ProductCrawler:
     async def crawl_product_data(self, url: str) -> ProductDTO:
         """
         爬取商品数据。
+
         参数：
             url (str): 商品页面URL。
+
         返回：
             ProductDTO: 包含商品信息的数据传输对象。
-        异常：
-            任何异常将被记录并抛出。
         """
-        driver = None
         try:
-            logger.info(f"Starting to crawl product data from: {url}")
-            site_config = self._get_site_config(url)
-
-            # 设置ChromeDriver路径
             driver = webdriver.Chrome(
-                executable_path=settings.CHROME_DRIVER_PATH,
+                service=self.service,
                 options=self.chrome_options
             )
 
-            # 设置等待
-            wait = WebDriverWait(driver, 10)
-            driver.get(url)
+            try:
+                driver.get(url)
+                wait = WebDriverWait(driver, 10)  # 等待最多10秒
+                site_config = self._get_site_config(url)
 
-            # 等待页面加载完成
-            wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+                # 获取商品信息
+                title = self._get_title(driver, wait, site_config)
+                price = self._get_price(driver, wait, site_config)
+                image_url = self._get_image(driver, wait, site_config)
 
-            # 获取标题
-            title_element = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, site_config.title))
-            )
-            title = title_element.text.strip()
+                return ProductDTO(
+                    title=title,
+                    price=price,
+                    image_url=image_url,
+                    product_url=url
+                )
 
-            # 获取价格
-            price = self._extract_price(driver, wait, site_config)
-
-            # 获取图片
-            image_element = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, site_config.image))
-            )
-            image_url = image_element.get_attribute('src')
-
-            logger.info(f"Successfully crawled product: {title}")
-
-            return ProductDTO(
-                title=title,
-                price=price,
-                image_url=image_url,
-                product_url=url
-            )
-
-        except Exception as e:
-            logger.error(f"Error crawling product data: {str(e)}")
-            raise
-
-        finally:
-            if driver:
+            finally:
                 driver.quit()
 
-    def _extract_price(self, driver, wait, site_config) -> str:
+        except Exception as e:
+            logger.error(f"Error crawling product: {str(e)}")
+            raise
+
+    def _get_title(self, driver, wait, site_config) -> str:
         """
-        提取商品价格。
+        获取商品标题。
+
         参数：
             driver: WebDriver实例。
             wait: WebDriverWait实例。
             site_config: 网站配置对象。
+
+        返回：
+            str: 商品标题。
+        """
+        try:
+            title_element = wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, site_config.title)
+                )
+            )
+            return title_element.text.strip()
+        except Exception as e:
+            logger.error(f"Error getting title: {str(e)}")
+            raise
+
+    def _get_price(self, driver, wait, site_config) -> str:
+        """
+        获取商品价格。
+
+        参数：
+            driver: WebDriver实例。
+            wait: WebDriverWait实例。
+            site_config: 网站配置对象。
+
         返回：
             str: 商品价格。
+        """
+        try:
+            return self._extract_price(driver, wait, site_config)
+        except Exception as e:
+            logger.error(f"Error getting price: {str(e)}")
+            raise
+
+    def _get_image(self, driver, wait, site_config) -> str:
+        """
+        获取商品图片。
+
+        参数：
+            driver: WebDriver实例。
+            wait: WebDriverWait实例。
+            site_config: 网站配置对象。
+
+        返回：
+            str: 商品图片的URL。
+        """
+        try:
+            image_element = wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, site_config.image)
+                )
+            )
+            return image_element.get_attribute('src')
+        except Exception as e:
+            logger.error(f"Error getting image: {str(e)}")
+            raise
+
+    def _extract_price(self, driver, wait, site_config) -> str:
+        """
+        提取商品价格。
+
+        参数：
+            driver: WebDriver实例。
+            wait: WebDriverWait实例。
+            site_config: 网站配置对象。
+
+        返回：
+            str: 商品价格。
+
         异常：
             如果无法提取价格，将记录并抛出异常。
         """
